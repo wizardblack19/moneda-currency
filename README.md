@@ -64,7 +64,7 @@ Frontend (Vue.js 3) → Backend (Python/Flask) → API Externa (ExchangeRate-API
 ### Paso 1: Clonar o Descargar el Proyecto
 
 ```bash
-cd "c:\Users\wizar\OneDrive\Universidad\Programación VI\Guia 1"
+git "[https://github.com/wizardblack19/moneda-currency.git](https://github.com/wizardblack19/moneda-currency.git)"
 ```
 
 ### Paso 2: Crear Entorno Virtual (Recomendado)
@@ -303,12 +303,12 @@ print(response.json())
 
 ## Licencia
 
-Proyecto educativo de código abierto para Programación VI
+Proyecto educativo de código abierto para el curso de Programación VI EFPEM - USAC
 
 ## Autor
 
-Proyecto desarrollado para la asignatura Programación VI
+Proyecto desarrollado par Marvin Lopez
 
 ## Contacto y Soporte
 
-Para dudas o problemas con el proyecto, consulta la documentación o contacta al profesor.
+Es solo un proyecto universitario, no tiene soporte use solo como demostración de las capacidades de python
