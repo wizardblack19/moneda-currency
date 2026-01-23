@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor de Moneda</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Vue.js 3 CDN -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div id="app" class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-12">
+            <div class="flex items-center justify-center mb-4">
+                <i class="fas fa-exchange-alt text-5xl text-indigo-600"></i>
+            </div>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Conversor de Moneda</h1>
+            <p class="text-gray-600">Conversión en tiempo real con tasas actualizadas</p>
+        </header>
+
+        <!-- Main Converter Card -->
+        <div class="max-w-2xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <!-- Amount Input -->
+                <div class="mb-6">
+                    <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-dollar-sign mr-2"></i>Cantidad
+                    </label>
+                    <input
+                        type="number"
+                        v-model.number="amount"
+                        @keypress.enter="convertCurrency"
+                        placeholder="Ingresa la cantidad"
+                        min="0"
+                        step="0.01"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition text-lg"
+                    >
+                </div>
+
+                <!-- Currency Selection -->
+                <div class="grid md:grid-cols-2 gap-6 mb-6">
+                    <!-- From Currency -->
+                    <div class="currency-select relative">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-arrow-up mr-2"></i>De
+                        </label>
+                        <!-- Select Button -->
+                        <button
+                            type="button"
+                            @click="showFromDropdown = !showFromDropdown"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition cursor-pointer bg-white text-left flex items-center justify-between"
+                        >
+                            <span class="truncate">{{ selectedFromCurrency }}</span>
+                            <i class="fas fa-chevron-down text-gray-400 transition-transform" :class="{'rotate-180': showFromDropdown}"></i>
+                        </button>
+                        <!-- Dropdown -->
+                        <div v-show="showFromDropdown" class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                            <!-- Search Input -->
+                            <div class="p-2 border-b border-gray-200">
+                                <div class="relative">
+                                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                    <input
+                                        type="text"
+                                        v-model="fromSearch"
+                                        placeholder="Buscar moneda..."
+                                        class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm"
+                                        @click.stop
+                                    >
+                                </div>
+                            </div>
+                            <!-- Options List -->
+                            <ul class="max-h-60 overflow-y-auto">
+                                <li
+                                    v-for="currency in filteredFromCurrencies"
+                                    :key="currency.code"
+                                    @click="selectFromCurrency(currency.code)"
+                                    class="px-4 py-2 hover:bg-indigo-50 cursor-pointer flex items-center transition"
+                                    :class="{'bg-indigo-100 text-indigo-700': currency.code === fromCurrency}"
+                                >
+                                    <span class="font-medium mr-2">{{ currency.code }}</span>
+                                    <span class="text-gray-600 text-sm truncate">{{ currency.name }}</span>
+                                </li>
+                                <li v-if="filteredFromCurrencies.length === 0" class="px-4 py-3 text-gray-500 text-center text-sm">
+                                    No se encontraron monedas
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- To Currency -->
+                    <div class="currency-select relative">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-arrow-down mr-2"></i>A
+                        </label>
+                        <!-- Select Button -->
+                        <button
+                            type="button"
+                            @click="showToDropdown = !showToDropdown"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition cursor-pointer bg-white text-left flex items-center justify-between"
+                        >
+                            <span class="truncate">{{ selectedToCurrency }}</span>
+                            <i class="fas fa-chevron-down text-gray-400 transition-transform" :class="{'rotate-180': showToDropdown}"></i>
+                        </button>
+                        <!-- Dropdown -->
+                        <div v-show="showToDropdown" class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                            <!-- Search Input -->
+                            <div class="p-2 border-b border-gray-200">
+                                <div class="relative">
+                                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                    <input
+                                        type="text"
+                                        v-model="toSearch"
+                                        placeholder="Buscar moneda..."
+                                        class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm"
+                                        @click.stop
+                                    >
+                                </div>
+                            </div>
+                            <!-- Options List -->
+                            <ul class="max-h-60 overflow-y-auto">
+                                <li
+                                    v-for="currency in filteredToCurrencies"
+                                    :key="currency.code"
+                                    @click="selectToCurrency(currency.code)"
+                                    class="px-4 py-2 hover:bg-indigo-50 cursor-pointer flex items-center transition"
+                                    :class="{'bg-indigo-100 text-indigo-700': currency.code === toCurrency}"
+                                >
+                                    <span class="font-medium mr-2">{{ currency.code }}</span>
+                                    <span class="text-gray-600 text-sm truncate">{{ currency.name }}</span>
+                                </li>
+                                <li v-if="filteredToCurrencies.length === 0" class="px-4 py-3 text-gray-500 text-center text-sm">
+                                    No se encontraron monedas
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Swap Button -->
+                <div class="flex justify-center mb-6">
+                    <button
+                        @click="swapCurrencies"
+                        class="bg-indigo-100 hover:bg-indigo-200 text-indigo-600 p-3 rounded-full transition transform hover:rotate-180 duration-300"
+                        title="Intercambiar monedas"
+                    >
+                        <i class="fas fa-exchange-alt text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Convert Button -->
+                <button
+                    @click="convertCurrency"
+                    :disabled="isConvertDisabled"
+                    :class="{'opacity-50 cursor-not-allowed': isConvertDisabled}"
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-lg transition duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:hover:bg-indigo-600 disabled:hover:shadow-lg disabled:hover:translate-y-0"
+                >
+                    <template v-if="loading">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>Convirtiendo...
+                    </template>
+                    <template v-else-if="!serverStatus">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>Sin conexión
+                    </template>
+                    <template v-else-if="currencies.length === 0">
+                        <i class="fas fa-hourglass-half mr-2"></i>Cargando monedas...
+                    </template>
+                    <template v-else>
+                        <i class="fas fa-calculator mr-2"></i>Convertir
+                    </template>
+                </button>
+
+                <!-- Result Display -->
+                <transition name="fade">
+                    <div v-if="result" class="mt-6 p-6 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg border-2 border-indigo-200">
+                        <div class="text-center">
+                            <p class="text-gray-600 mb-2">Resultado:</p>
+                            <p class="text-3xl font-bold text-indigo-600">{{ formatNumber(result.result) }} {{ result.to_currency }}</p>
+                            <p class="text-sm text-gray-500 mt-2">
+                                1 {{ result.from_currency }} = {{ formatRate(result.rate) }} {{ result.to_currency }}
+                            </p>
+                        </div>
+                    </div>
+                </transition>
+
+                <!-- Error Display -->
+                <transition name="fade">
+                    <div v-if="error" class="mt-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            <p>{{ error }}</p>
+                        </div>
+                    </div>
+                </transition>
+
+                <!-- Loading Indicator -->
+                <transition name="fade">
+                    <div v-if="loading" class="mt-6 text-center">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                        <p class="text-gray-600 mt-2">Obteniendo tasas de cambio...</p>
+                    </div>
+                </transition>
+            </div>
+
+            <!-- Info Card -->
+            <div class="mt-6 bg-white rounded-lg shadow-md p-6">
+                <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
+                    <i class="fas fa-info-circle text-indigo-600 mr-2"></i>
+                    Información
+                </h3>
+                <ul class="text-sm text-gray-600 space-y-2">
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mr-2 mt-1"></i>
+                        <span>Las tasas de cambio se actualizan en tiempo real</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mr-2 mt-1"></i>
+                        <span>Soporta las principales monedas del mundo</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mr-2 mt-1"></i>
+                        <span>Desarrollado con Vue.js 3 y Python Flask</span>
+                    </li>
+                    <li class="flex items-start" v-if="serverStatus">
+                        <i class="fas fa-check-circle text-green-500 mr-2 mt-1"></i>
+                        <span>Servidor: <strong class="text-green-600">Conectado</strong></span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center mt-12 text-gray-600">
+            <p class="text-sm">
+                <i class="fas fa-graduation-cap mr-2"></i>Marvin Lopez - 201115879
+            </p>
+            <p class="text-xs mt-2" v-if="lastUpdate">
+                Última actualización: {{ formatDate(lastUpdate) }}
+            </p>
+        </footer>
+    </div>
+
+    <!-- Vue.js App -->
+    <script src="script.js"></script>
+
+    <!-- Estilos para transiciones de Vue y selectores -->
+    <style>
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.3s ease;
+        }
+        .fade-enter-from, .fade-leave-to {
+            opacity: 0;
+        }
+
+        /* Estilos para el scrollbar del dropdown */
+        .currency-select ul::-webkit-scrollbar {
+            width: 6px;
+        }
+        .currency-select ul::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        .currency-select ul::-webkit-scrollbar-thumb {
+            background: #c7d2fe;
+            border-radius: 3px;
+        }
+        .currency-select ul::-webkit-scrollbar-thumb:hover {
+            background: #a5b4fc;
+        }
+
+        /* Animación para el dropdown */
+        .currency-select > div[v-show] {
+            animation: slideDown 0.2s ease-out;
+        }
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</body>
+</html>
